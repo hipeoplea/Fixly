@@ -11,6 +11,8 @@
    title_page: {title_page()}
 )
 
+#include "first-part.typ"
+
 /* Оглавление не обязательно */
 
 #struct[Введение]
