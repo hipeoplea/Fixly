@@ -1,18 +1,9 @@
-#let use_case_table(rows) {
-  #table(
-    columns: (10em, 30em),
-    align: left,
-    rows
-  )
-}
-
 #align(center)[
   #text(size: 14pt, weight: "bold")[1 этап]
 ]
 
-#v(0.5cm)
-
 *1. Предметная область*
+
 
 *2. Подробное текстовое описание предметной области*
 
