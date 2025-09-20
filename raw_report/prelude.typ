@@ -116,7 +116,7 @@
     block(inset: (left: 1.25cm), it)
   }
   show heading.where(depth: 1): it => {
-    pagebreak()
+
     align(center)[
       #it
     ]
@@ -126,20 +126,12 @@
 }
 
 #let thesis_format(
-  title,
-  author,
   title_page: [],
   doc,
 ) = {
 
   /* 4.3 Титульник не нумеруется */
   title_page
-
-  set document(
-    title: title,
-    author: author,
-  )
-
   /* 4.2 стиль для основного текста без титульника */
   set page(
     paper: "a4",
@@ -161,8 +153,6 @@
   show: set_label_format
   show: set_table_format
   show: set_text_format
-
-
   doc
 }
 
