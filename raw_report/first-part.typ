@@ -316,6 +316,7 @@ Fixly нужен для того, чтобы показывать объявле
     Docker\
     Kubernates\
     Spotless\
+    JoCoCo\
     Error Prone\
     OpenAPI (Swagger)\
     OpenAPI Generator\
