@@ -26,14 +26,23 @@ CREATE TABLE IF NOT EXISTS "user" (
     phone        VARCHAR(12),
     rating       DECIMAL(2,1),
     status       VARCHAR(20) NOT NULL DEFAULT 'active',
-    banned_at    TIMESTAMPTZ,
-    ban_reason   VARCHAR(1000),
+    last_ban     INT REFERENCES ban_list(id),
     created_at   TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT chk_user_phone_format CHECK (phone IS NULL OR phone ~ '^\d{10,12}$'),
     CONSTRAINT chk_user_rating CHECK (rating IS NULL OR (rating >= 0 AND rating <= 5)),
     CONSTRAINT chk_user_status CHECK (status IN ('active','banned','deleted'))
     CONSTRAINT chk_user_email_format CHECK (email ~* '^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$')
     CONSTRAINT chk_user_ban_fields CHECK ( (status = 'banned') = (banned_at IS NOT NULL) AND (status <> 'banned' OR ban_reason IS NOT NULL) )
+);
+
+CREATE TABLE IF NOT EXISTS ban_list (
+    id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    banned_user_id  INT NOT NULL REFERENCES "user"(id),
+    ban_reason      VARCHAR(1000),
+    ban_type        VARCHAR(30),
+    ban_duration    TIMESTAMPTZ,
+    admin_user_id   INT NOT NULL REFERENCES "user"(id),
+    status          VARCHAR(20) NOT NULL CHECK (status IN ('active', 'canceled')) DEFAULT 'active',
 );
 
 CREATE TABLE IF NOT EXISTS notification (
@@ -292,8 +301,7 @@ BEGIN
     IF NEW.action IS NOT NULL AND LOWER(NEW.action) IN ('unban','restore') AND NEW.target_user_id IS NOT NULL THEN
         UPDATE "user"
         SET status = 'active',
-            banned_at = NULL,
-            ban_reason = NULL
+            last_ban = NULL,
         WHERE id = NEW.target_user_id;
     END IF;
 
