@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS listing (
     CONSTRAINT chk_listing_status         CHECK (status IN ('active','paused','archived','blocked'))
 );
 
-CREATE TABLE IF NOT EXISTS photo (
+CREATE TABLE IF NOT EXISTS listing_photo (
     id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     listing_id   UUID REFERENCES listing(id) ON DELETE CASCADE,
     url          VARCHAR(255) NOT NULL,
