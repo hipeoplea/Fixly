@@ -277,7 +277,11 @@ CREATE INDEX IF NOT EXISTS idx_notification_user_read ON notification(user_id, i
 CREATE OR REPLACE FUNCTION fn_moderation_action_apply() RETURNS trigger
     LANGUAGE plpgsql AS $$
 BEGIN
-    IF NEW.action IS NOT NULL AND LOWER(NEW.action) LIKE 'ban%' AND NEW.target_user_id IS NOT NULL THEN
+    IF NEW.action IS NOT NULL AND (
+            LOWER(NEW.action) = 'ban' OR
+            LOWER(NEW.action) = 'ban_permanent' OR
+            LOWER(NEW.action) = 'ban_temp')
+            AND NEW.target_user_id IS NOT NULL THEN
         UPDATE "user"
         SET status = 'banned',
             banned_at = now(),
@@ -328,7 +332,7 @@ BEGIN
       AND NOT (r.end_at <= NEW.start_at OR r.start_at >= NEW.end_at);
 
     IF conflict_count > 0 THEN
-        RAISE EXCEPTION 'double booking detected: listing % already has % overlapping rental(s)', NEW.listing_id, conflict_count;
+        RAISE EXCEPTION 'overbooking detected: listing % already has % overlapping rental(s)', NEW.listing_id, conflict_count;
     END IF;
 
     RETURN NEW;
@@ -776,6 +780,8 @@ DECLARE
 BEGIN
     IF p_email IS NULL OR trim(p_email::text) = '' THEN
         RAISE EXCEPTION 'E-mail обязателен для регистрации';
+    ELSIF NOT p_email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$' THEN
+        RAISE EXCEPTION 'Неверный формат E-mail';
     END IF;
 
     IF p_phone IS NOT NULL AND p_phone !~ '^\d{10,12}$' THEN
