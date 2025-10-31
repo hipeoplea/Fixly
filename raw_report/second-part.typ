@@ -20,7 +20,7 @@
 CREATE TABLE IF NOT EXISTS "user" (
     id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email        CITEXT NOT NULL UNIQUE,
-    name         VARCHAR(210) NOT NULL,
+    name         VARCHAR(20) NOT NULL,
     surname      VARCHAR(60) NOT NULL,
     last_name    VARCHAR(20),
     phone        VARCHAR(12),
