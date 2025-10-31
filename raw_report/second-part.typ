@@ -20,34 +20,39 @@
 CREATE TABLE IF NOT EXISTS "user" (
     id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email        CITEXT NOT NULL UNIQUE,
-    name         VARCHAR(20) NOT NULL,
+    name         VARCHAR(210) NOT NULL,
     surname      VARCHAR(60) NOT NULL,
     last_name    VARCHAR(20),
     phone        VARCHAR(12),
     rating       DECIMAL(2,1),
     status       VARCHAR(20) NOT NULL DEFAULT 'active',
     banned_at    TIMESTAMPTZ,
-    ban_reason   TEXT,
+    ban_reason   VARCHAR(1000),
     created_at   TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT chk_user_phone_format CHECK (phone IS NULL OR phone ~ '^\d{10,12}$'),
     CONSTRAINT chk_user_rating CHECK (rating IS NULL OR (rating >= 0 AND rating <= 5)),
     CONSTRAINT chk_user_status CHECK (status IN ('active','banned','deleted'))
+    CONSTRAINT chk_user_email_format CHECK (email ~* '^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$')
+    CONSTRAINT chk_user_ban_fields CHECK ( (status = 'banned') = (banned_at IS NOT NULL) AND (status <> 'banned' OR ban_reason IS NOT NULL) )
 );
 
 CREATE TABLE IF NOT EXISTS notification (
     id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id      UUID NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
-    type         VARCHAR(50),
+    type         VARCHAR(10),
     body         TEXT,
     is_read      BOOLEAN DEFAULT FALSE,
-    created_at   TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    created_at   TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_notification_type CHECK (type IN ('system','message','rental','payment','moderation'))
 );
 
 CREATE TABLE IF NOT EXISTS blacklist (
     id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     owner_id         UUID REFERENCES "user"(id) ON DELETE CASCADE,
     blocked_user_id  UUID REFERENCES "user"(id) ON DELETE CASCADE,
-    created_at       TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    created_at       TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_blacklist_owner_blocked UNIQUE (owner_id, blocked_user_id),
+    CONSTRAINT chk_blacklist_not_self CHECK (owner_id <> blocked_user_id)
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS ux_blacklist_owner_blocked
@@ -186,7 +191,8 @@ CREATE TABLE IF NOT EXISTS report (
     target_id    UUID REFERENCES rental(id),
     reason_body  TEXT,
     created_at   TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
-    resolved_by  UUID REFERENCES "user"(id) ON DELETE SET NULL
+    resolved_by  UUID REFERENCES "user"(id) ON DELETE SET NULL,
+    CONSTRAINT chk_report_status CHECK (status IN ('open','in_review','resolved','rejected'))
 );
 
 CREATE TABLE IF NOT EXISTS moderation_action (
@@ -197,7 +203,8 @@ CREATE TABLE IF NOT EXISTS moderation_action (
     target_user_id UUID REFERENCES "user"(id) ON DELETE SET NULL,
     action         VARCHAR(50),
     comment        TEXT,
-    created_at     TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    created_at     TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT chk_moderation_action CHECK (action IN ('warn','block_user','unblock_user','hide_listing','unhide_listing','close_report'))
 );
 
 ```
